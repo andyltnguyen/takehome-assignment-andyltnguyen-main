@@ -108,42 +108,47 @@ class Knapsack:
         @param num_items: number of items still being considered
         @param filename: save name for csv of table (used for testing)
         """
-        # Initialize DP table with None
+        # Initialize memoization table
         dp = [[None] * (capacity + 1) for _ in range(num_items + 1)]
-        # first row is all 0s
-        dp[0] = [0] * (capacity + 1)
 
-        selected_items, selected_weight, max_value = [], 0, 0
+        # Recursive helper function with memoization
+        def knapsack(i, c):
+            if i == 0 or c == 0:
+                return 0
+            if dp[i][c] is not None:
+                return dp[i][c]
+            weight = items[i - 1][1]
+            value = items[i - 1][2]
+            if weight > c:
+                dp[i][c] = knapsack(i - 1, c)
+            else:
+                dp[i][c] = max(knapsack(i - 1, c), knapsack(i - 1, c - weight) + value)
+            return dp[i][c]
 
+        # Fill the table
+        for i in range(num_items + 1):
+            for c in range(capacity + 1):
+                knapsack(i, c)
 
+        # Backtrack to find selected items
         selected_items = []
-        total_weight = 0
-
-        # Fill DP table
-        for i in range(1, num_items + 1):
-            location, weight, value = items[i - 1]
-            for cap in range(capacity + 1):
-                if weight > cap:
-                    dp[i][cap] = dp[i - 1][cap]
-                else:
-                    dp[i][cap] = max(dp[i - 1][cap], dp[i - 1][cap - weight] + value)
-
-        # Backtrack to find which items were selected
+        selected_weight = 0
         cap = capacity
         for i in range(num_items, 0, -1):
             if dp[i][cap] != dp[i - 1][cap]:
                 location, weight, value = items[i - 1]
                 selected_items.append(location)
-                total_weight += weight
+                selected_weight += weight
                 cap -= weight
 
         selected_items.reverse()
         max_value = dp[num_items][capacity]
 
-        # === Save DP Table to CSV ===
+        # Save table to CSV
         self.saveCSV(dp, items, capacity, filename)
 
         return selected_items, selected_weight, max_value
+
 
     def saveCSV(self, dp: list, items: list, capacity: int, filename: str):
         with open(filename+".csv", 'w', newline='') as f:
