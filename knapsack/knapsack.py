@@ -85,6 +85,25 @@ class Knapsack:
         # Case 1: Cannot take this item (too heavy)
         if weight > capacity:
             return self.recursiveKnapsack(items, capacity, num_items - 1, filename, stats)
+        
+        # Case 2: Try including the item
+        Linc, winc, vinc = self.recursiveKnapsack(
+            items, capacity - weight, num_items - 1, filename, stats)
+        Linc = Linc + [location]
+        winc += weight
+        vinc += value
+
+        # Try excluding the item
+        Lexc, wexc, vexc = self.recursiveKnapsack(
+            items, capacity, num_items - 1, filename, stats)
+
+        # Return better of the two
+        if vinc > vexc:
+            Lopt, wopt, vopt = Linc, winc, vinc
+        else:
+            Lopt, wopt, vopt = Lexc, wexc, vexc
+
+        return Lopt, wopt, vopt
 
     def dynamicKnapsack(self, items: list, capacity: int, num_items: int, filename: str):
         """
