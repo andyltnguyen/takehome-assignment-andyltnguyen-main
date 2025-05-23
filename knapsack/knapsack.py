@@ -71,11 +71,6 @@ class Knapsack:
         # Increment call count on every call - feed back into the function on each call for testing
         stats['count'] += 1
 
-        # delete the below 3 lines if function implemented
-        with open(filename + '.txt', "w") as f:
-            f.write(str(stats['count']))
-        stats['logged'] = True
-
         # Base case
         if capacity == 0 or num_items == 0:
             if not stats['logged'] and filename:
@@ -83,12 +78,13 @@ class Knapsack:
                     f.write(str(stats['count']))
                 stats['logged'] = True  # Make sure we only log once
             return [], 0, 0
+        
+        # Get current item
+        location, weight, value = items[num_items - 1]
 
-        """
-        IMPLEMENT ME FOR TASK A
-        """
-
-        return [], 0, 0
+        # Case 1: Cannot take this item (too heavy)
+        if weight > capacity:
+            return self.recursiveKnapsack(items, capacity, num_items - 1, filename, stats)
 
     def dynamicKnapsack(self, items: list, capacity: int, num_items: int, filename: str):
         """
