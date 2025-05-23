@@ -98,53 +98,53 @@ class Knapsack:
         else:
             return Lexc, wexc, vexc
 
-
     def dynamicKnapsack(self, items: list, capacity: int, num_items: int, filename: str):
         """
-        Dynamic 0/1 Knapsack that saves the dynamic programming table as a csv.
-
-        @param items: list of (name, weight, value)
-        @param capacity: current remaining knapsack capacity
-        @param num_items: number of items still being considered
-        @param filename: save name for csv of table (used for testing)
+        Dynamic 0/1 Knapsack using recursive memoization (top-down DP).
+        Saves the dynamic programming table as a csv.
         """
-        # Initialize memoization table
-        dp = [[None] * (capacity + 1) for _ in range(num_items + 1)]
 
-        # Recursive helper function with memoization
-        def knapsack(i, c):
-            if i == 0 or c == 0:
-                return 0
+        dp = [[None] * (capacity + 1) for _ in range(num_items + 1)]
+        dp[0] = [0] * (capacity + 1)  # Fully initialize base case
+
+
+        def memo(i, c):
             if dp[i][c] is not None:
                 return dp[i][c]
+
+            if i == 0 or c == 0:
+                dp[i][c] = 0
+                return 0
+
             weight = items[i - 1][1]
             value = items[i - 1][2]
+
             if weight > c:
-                dp[i][c] = knapsack(i - 1, c)
+                dp[i][c] = memo(i - 1, c)
             else:
-                dp[i][c] = max(knapsack(i - 1, c), knapsack(i - 1, c - weight) + value)
+                dp[i][c] = max(memo(i - 1, c), memo(i - 1, c - weight) + value)
+
             return dp[i][c]
 
-        # Fill the table
-        for i in range(num_items + 1):
-            for c in range(capacity + 1):
-                knapsack(i, c)
+        # Only start recursion from final state — no full-table loop
+        memo(num_items, capacity)
 
         # Backtrack to find selected items
         selected_items = []
         selected_weight = 0
         cap = capacity
         for i in range(num_items, 0, -1):
-            if dp[i][cap] != dp[i - 1][cap]:
-                location, weight, value = items[i - 1]
-                selected_items.append(location)
-                selected_weight += weight
-                cap -= weight
+            if dp[i][cap] is None or dp[i][cap] == dp[i - 1][cap]:
+                continue
+            location, weight, value = items[i - 1]
+            selected_items.append(location)
+            selected_weight += weight
+            cap -= weight
 
         selected_items.reverse()
         max_value = dp[num_items][capacity]
 
-        # Save table to CSV
+        # Save to CSV
         self.saveCSV(dp, items, capacity, filename)
 
         return selected_items, selected_weight, max_value
