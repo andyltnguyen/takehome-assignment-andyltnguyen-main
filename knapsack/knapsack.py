@@ -57,53 +57,47 @@ class Knapsack:
             raise Exception("Incorrect Knapsack Solver Used.")
 
     def recursiveKnapsack(self, items: list, capacity: int, num_items: int, filename: str = None,
-                          stats={'count': 0, 'logged': False}):
+                        stats={'count': 0, 'logged': False}):
         """
         Recursive 0/1 Knapsack that logs how many times it's been called
         when the base case is first hit.
-
-        @param items: list of (name, weight, value)
-        @param capacity: current remaining knapsack capacity
-        @param num_items: number of items still being considered
-        @param filename: where to save call count on first base case (used for testing)
-        @param stats: dict tracking call count and log status (used for testing)
         """
-        # Increment call count on every call - feed back into the function on each call for testing
-        stats['count'] += 1
+        # Only increment if we're still counting
+        if not stats['logged']:
+            stats['count'] += 1
 
         # Base case
         if capacity == 0 or num_items == 0:
             if not stats['logged'] and filename:
-                with open(filename+'.txt', "w") as f:
-                    f.write(str(stats['count']))
-                stats['logged'] = True  # Make sure we only log once
+                with open(filename + '.txt', "w") as f:
+                    f.write(str(stats['count']))  # Only log the first base case
+                stats['logged'] = True
             return [], 0, 0
-        
+
         # Get current item
         location, weight, value = items[num_items - 1]
 
-        # Case 1: Cannot take this item (too heavy)
+        # Case 1: Cannot take this item
         if weight > capacity:
             return self.recursiveKnapsack(items, capacity, num_items - 1, filename, stats)
-        
-        # Case 2: Try including the item
+
+        # Case 2: Include the item
         Linc, winc, vinc = self.recursiveKnapsack(
             items, capacity - weight, num_items - 1, filename, stats)
         Linc = Linc + [location]
         winc += weight
         vinc += value
 
-        # Try excluding the item
+        # Case 3: Exclude the item
         Lexc, wexc, vexc = self.recursiveKnapsack(
             items, capacity, num_items - 1, filename, stats)
 
-        # Return better of the two
+        # Choose better
         if vinc > vexc:
-            Lopt, wopt, vopt = Linc, winc, vinc
+            return Linc, winc, vinc
         else:
-            Lopt, wopt, vopt = Lexc, wexc, vexc
+            return Lexc, wexc, vexc
 
-        return Lopt, wopt, vopt
 
     def dynamicKnapsack(self, items: list, capacity: int, num_items: int, filename: str):
         """
@@ -121,9 +115,30 @@ class Knapsack:
 
         selected_items, selected_weight, max_value = [], 0, 0
 
-        """
-        IMPLEMENT ME FOR TASK B
-        """
+
+        selected_items = []
+        total_weight = 0
+
+        # Fill DP table
+        for i in range(1, num_items + 1):
+            location, weight, value = items[i - 1]
+            for cap in range(capacity + 1):
+                if weight > cap:
+                    dp[i][cap] = dp[i - 1][cap]
+                else:
+                    dp[i][cap] = max(dp[i - 1][cap], dp[i - 1][cap - weight] + value)
+
+        # Backtrack to find which items were selected
+        cap = capacity
+        for i in range(num_items, 0, -1):
+            if dp[i][cap] != dp[i - 1][cap]:
+                location, weight, value = items[i - 1]
+                selected_items.append(location)
+                total_weight += weight
+                cap -= weight
+
+        selected_items.reverse()
+        max_value = dp[num_items][capacity]
 
         # === Save DP Table to CSV ===
         self.saveCSV(dp, items, capacity, filename)
